@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Heart Disease Prediction System</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --red:#C0392B; --red-d:#922B21; --red-l:#FADBD8;
+      --cream:#FDF6EC; --dark:#1A0A0A; --mid:#5D2E2E;
+      --grey:#7F8C8D; --border:#E8D5D0; --white:#FFFFFF;
+      --shadow:0 4px 24px rgba(192,57,43,0.12);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh}
+
+    nav{background:var(--dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100}
+    .nav-brand{font-family:'DM Serif Display',serif;font-size:1.25rem;color:#fff;display:flex;align-items:center;gap:10px}
+    .nav-brand .dot{width:10px;height:10px;background:var(--red);border-radius:50%;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.7}}
+    .nav-link{color:#aaa;text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s}
+    .nav-link:hover{color:#fff}
+
+    .hero{background:linear-gradient(135deg,var(--dark) 0%,#3d1515 100%);color:#fff;padding:4rem 2rem 3rem;text-align:center;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(192,57,43,.25) 0%,transparent 60%);pointer-events:none}
+    .hero-eyebrow{font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:#e07070;margin-bottom:.75rem}
+    .hero h1{font-family:'DM Serif Display',serif;font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin-bottom:1rem}
+    .hero h1 em{color:#e07070;font-style:italic}
+    .hero p{max-width:540px;margin:0 auto 1.5rem;color:#ccc;font-size:.95rem;line-height:1.7}
+    .badge{display:inline-block;background:rgba(192,57,43,.3);border:1px solid rgba(192,57,43,.5);color:#ffb3b3;font-size:.8rem;padding:.3rem .9rem;border-radius:20px;letter-spacing:.04em}
+
+    .container{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem}
+
+    .error-box{margin-top:1.5rem;background:var(--red-l);border-left:4px solid var(--red);padding:.9rem 1.2rem;border-radius:8px;font-size:.9rem;color:var(--red-d)}
+
+    .form-card{background:var(--white);border-radius:20px;box-shadow:var(--shadow);margin-top:2.5rem;overflow:hidden}
+    .form-card-header{background:linear-gradient(90deg,var(--red) 0%,#e74c3c 100%);padding:1.4rem 2rem;display:flex;align-items:center;gap:12px}
+    .form-card-header h2{font-family:'DM Serif Display',serif;font-size:1.3rem;color:#fff}
+    .form-card-header p{font-size:.82rem;color:rgba(255,255,255,.75)}
+    .form-body{padding:2rem}
+
+    .section-label{font-size:.7rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin:1.75rem 0 .9rem;padding-bottom:.4rem;border-bottom:2px solid var(--red-l)}
+
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem}
+    @media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+    .field{display:flex;flex-direction:column;gap:.4rem}
+    .field label{font-size:.82rem;font-weight:600;color:var(--mid);letter-spacing:.02em}
+    .field label span{font-weight:400;color:var(--grey);font-size:.76rem;margin-left:4px}
+    .field input,.field select{height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 .9rem;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--dark);background:var(--cream);outline:none;transition:border-color .2s,box-shadow .2s;appearance:none;-webkit-appearance:none}
+    .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235D2E2E' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:2.5rem}
+    .field input:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,57,43,.12)}
+    .field input::placeholder{color:#bbb}
+
+    .submit-row{margin-top:2.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .btn-primary{background:var(--red);color:#fff;border:none;border-radius:12px;padding:.85rem 2.5rem;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .2s,transform .15s,box-shadow .2s}
+    .btn-primary:hover{background:var(--red-d);transform:translateY(-1px);box-shadow:0 6px 18px rgba(192,57,43,.3)}
+    .btn-secondary{background:transparent;color:var(--grey);border:1.5px solid var(--border);border-radius:12px;padding:.8rem 1.6rem;font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;transition:border-color .2s,color .2s;text-decoration:none;display:inline-flex;align-items:center}
+    .btn-secondary:hover{border-color:var(--mid);color:var(--mid)}
+
+    .disclaimer{margin-top:1.8rem;padding:.9rem 1.2rem;background:#FFF9C4;border-left:4px solid #F1C40F;border-radius:8px;font-size:.82rem;color:#7D6608;line-height:1.6}
+
+    footer{text-align:center;padding:1.5rem;font-size:.78rem;color:#aaa;border-top:1px solid var(--border)}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand"><div class="dot"></div>CardioPredict</div>
+  <a href="/records" class="nav-link">Patient Records →</a>
+</nav>
+
+<div class="hero">
+  <p class="hero-eyebrow">Machine Learning · Healthcare</p>
+  <h1>Heart Disease<br/><em>Risk Prediction</em></h1>
+  <p>Enter patient clinical parameters below. Our Logistic Regression model will analyze and predict the risk level instantly.</p>
+  {% if accuracy %}<span class="badge">Model Accuracy: {{ accuracy }}%</span>{% endif %}
+</div>
+
+<div class="container">
+  {% if error %}<div class="error-box">⚠ {{ error }}</div>{% endif %}
+
+  <form action="/predict" method="POST">
+    <div class="form-card">
+      <div class="form-card-header">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <div>
+          <h2>Patient Clinical Data</h2>
+          <p>Fill in all fields for an accurate prediction</p>
+        </div>
+      </div>
+
+      <div class="form-body">
+        <div class="section-label">Demographics</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Age <span>(years)</span></label>
+            <input type="number" name="age" min="1" max="120" placeholder="e.g. 45" required />
+          </div>
+          <div class="field">
+            <label>Sex</label>
+            <select name="sex" required>
+              <option value="" disabled selected>Select sex</option>
+              <option value="1">Male</option>
+              <option value="0">Female</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-label">Cardiac Symptoms</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Chest Pain Type</label>
+            <select name="cp" required>
+              <option value="" disabled selected>Select type</option>
+              <option>Typical angina</option>
+              <option>Atypical angina</option>
+              <option>Non-anginal pain</option>
+              <option>Asymptomatic</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Exercise Induced Angina</label>
+            <select name="exang" required>
+              <option value="" disabled selected>Select</option>
+              <option>No</option>
+              <option>Yes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-label">Vitals &amp; Lab Results</div>
+        <div class="grid-3">
+          <div class="field">
+            <label>Resting Blood Pressure <span>(mm Hg)</span></label>
+            <input type="number" name="trestbps" min="50" max="250" placeholder="e.g. 120" required />
+          </div>
+          <div class="field">
+            <label>Cholesterol <span>(mg/dl)</span></label>
+            <input type="number" name="chol" min="50" max="600" placeholder="e.g. 200" required />
+          </div>
+          <div class="field">
+            <label>Max Heart Rate <span>(bpm)</span></label>
+            <input type="number" name="thalach" min="50" max="250" placeholder="e.g. 150" required />
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="field">
+            <label>Fasting Blood Sugar</label>
+            <select name="fbs" required>
+              <option value="" disabled selected>Select</option>
+              <option>Lower than 120 mg/ml</option>
+              <option>Greater than 120 mg/ml</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Rest ECG</label>
+            <select name="restecg" required>
+              <option value="" disabled selected>Select result</option>
+              <option>Normal</option>
+              <option>ST-T wave abnormality</option>
+              <option>Left ventricular hypertrophy</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>ST Depression <span>(oldpeak)</span></label>
+            <input type="number" name="oldpeak" min="0" max="10" step="0.1" placeholder="e.g. 1.5" required />
+          </div>
+        </div>
+
+        <div class="section-label">Advanced Parameters</div>
+        <div class="grid-3">
+          <div class="field">
+            <label>Slope of ST Segment</label>
+            <select name="slope" required>
+              <option value="" disabled selected>Select</option>
+              <option>Upsloping</option>
+              <option>Flat</option>
+              <option>Downsloping</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Major Vessels <span>(0–3)</span></label>
+            <select name="ca" required>
+              <option value="" disabled selected>Select</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Thalassemia</label>
+            <select name="thal" required>
+              <option value="" disabled selected>Select</option>
+              <option>Normal</option>
+              <option>Fixed defect</option>
+              <option>Reversable defect</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Predict Risk
+          </button>
+          <button type="reset" class="btn-secondary">Clear Form</button>
+          <a href="/records" class="btn-secondary">View Records</a>
+        </div>
+
+        <div class="disclaimer">
+          ⚠ <strong>Medical Disclaimer:</strong> This tool is for educational and research purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment.
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<footer>Heart Disease Prediction System &nbsp;·&nbsp; Built with Flask &amp; Scikit-learn &nbsp;·&nbsp; For educational use</footer>
+</body>
+</html>

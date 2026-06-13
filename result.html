@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prediction Result – CardioPredict</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --red:#C0392B;--red-d:#922B21;--green:#1E8449;
+      --green-l:#D5F5E3;--red-l:#FADBD8;--cream:#FDF6EC;
+      --dark:#1A0A0A;--mid:#5D2E2E;--border:#E8D5D0;--white:#FFFFFF;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh}
+
+    nav{background:var(--dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px}
+    .nav-brand{font-family:'DM Serif Display',serif;font-size:1.25rem;color:#fff;display:flex;align-items:center;gap:10px}
+    .nav-brand .dot{width:10px;height:10px;background:var(--red);border-radius:50%;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.7}}
+
+    .page{max-width:760px;margin:0 auto;padding:3rem 1.5rem}
+
+    .result-card{background:var(--white);border-radius:24px;box-shadow:0 8px 40px rgba(0,0,0,.1);overflow:hidden;animation:slideUp .5s ease both}
+    @keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+    .result-header{padding:2.5rem 2rem 2rem;text-align:center}
+    .result-header.high{background:linear-gradient(135deg,#922B21 0%,#C0392B 100%)}
+    .result-header.low{background:linear-gradient(135deg,#145A32 0%,#1E8449 100%)}
+
+    .result-icon{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem}
+    .result-label{font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:.5rem}
+    .result-title{font-family:'DM Serif Display',serif;font-size:clamp(1.6rem,4vw,2.2rem);color:#fff;line-height:1.2}
+
+    .risk-meter-section{padding:1.8rem 2rem;border-bottom:1px solid var(--border);text-align:center}
+    .risk-meter-title{font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:1rem}
+    .meter-bar{height:14px;border-radius:99px;background:#eee;overflow:hidden;position:relative}
+    .meter-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+    .meter-fill.high{background:linear-gradient(90deg,#e74c3c,#922B21)}
+    .meter-fill.low{background:linear-gradient(90deg,#2ECC71,#1E8449)}
+    .meter-label{font-family:'DM Serif Display',serif;font-size:2rem;margin-top:.8rem}
+    .meter-label.high{color:var(--red)}
+    .meter-label.low{color:var(--green)}
+    .meter-sublabel{font-size:.82rem;color:#888;margin-top:.2rem}
+
+    .summary-section{padding:1.8rem 2rem;border-bottom:1px solid var(--border)}
+    .summary-section h3{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#888;margin-bottom:1.2rem}
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.9rem}
+    .summary-item{background:var(--cream);border-radius:12px;padding:.8rem 1rem;border:1px solid var(--border)}
+    .summary-item .s-label{font-size:.72rem;color:#888;margin-bottom:.25rem;letter-spacing:.03em}
+    .summary-item .s-value{font-weight:600;font-size:.95rem;color:var(--dark)}
+
+    .actions{padding:1.8rem 2rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+    .btn-primary{background:var(--red);color:#fff;border:none;border-radius:12px;padding:.85rem 2rem;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:background .2s,transform .15s}
+    .btn-primary:hover{background:var(--red-d);transform:translateY(-1px)}
+    .btn-secondary{background:transparent;color:#555;border:1.5px solid var(--border);border-radius:12px;padding:.8rem 1.6rem;font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s,color .2s}
+    .btn-secondary:hover{border-color:var(--mid);color:var(--mid)}
+
+    .advisory{margin:0 2rem 2rem;padding:1rem 1.2rem;border-radius:12px;font-size:.85rem;line-height:1.6}
+    .advisory.high{background:var(--red-l);color:var(--red-d);border-left:4px solid var(--red)}
+    .advisory.low{background:var(--green-l);color:var(--green);border-left:4px solid var(--green)}
+
+    footer{text-align:center;padding:1.5rem;font-size:.78rem;color:#aaa;border-top:1px solid var(--border)}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand"><div class="dot"></div>CardioPredict</div>
+</nav>
+
+<div class="page">
+  <div class="result-card">
+
+    <div class="result-header {{ risk_level }}">
+      <div class="result-icon">
+        {% if risk_level == 'high' %}
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        {% else %}
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        {% endif %}
+      </div>
+      <p class="result-label">Prediction Result</p>
+      <h1 class="result-title">{{ result }}</h1>
+    </div>
+
+    <div class="risk-meter-section">
+      <p class="risk-meter-title">Risk Probability</p>
+      <div class="meter-bar">
+        <div class="meter-fill {{ risk_level }}" style="width:{{ risk_pct }}%"></div>
+      </div>
+      <p class="meter-label {{ risk_level }}">{{ risk_pct }}%</p>
+      <p class="meter-sublabel">Estimated probability of heart disease</p>
+    </div>
+
+    <div class="summary-section">
+      <h3>Patient Summary</h3>
+      <div class="summary-grid">
+        <div class="summary-item"><div class="s-label">Age</div><div class="s-value">{{ record.age }} yrs</div></div>
+        <div class="summary-item"><div class="s-label">Sex</div><div class="s-value">{{ record.sex }}</div></div>
+        <div class="summary-item"><div class="s-label">Chest Pain</div><div class="s-value">{{ record.cp }}</div></div>
+        <div class="summary-item"><div class="s-label">Blood Pressure</div><div class="s-value">{{ record.trestbps }} mm Hg</div></div>
+        <div class="summary-item"><div class="s-label">Cholesterol</div><div class="s-value">{{ record.chol }} mg/dl</div></div>
+        <div class="summary-item"><div class="s-label">Max Heart Rate</div><div class="s-value">{{ record.thalach }} bpm</div></div>
+        <div class="summary-item"><div class="s-label">Fasting Sugar</div><div class="s-value">{{ record.fbs }}</div></div>
+        <div class="summary-item"><div class="s-label">ECG</div><div class="s-value">{{ record.restecg }}</div></div>
+        <div class="summary-item"><div class="s-label">ST Depression</div><div class="s-value">{{ record.oldpeak }}</div></div>
+        <div class="summary-item"><div class="s-label">Thal</div><div class="s-value">{{ record.thal }}</div></div>
+      </div>
+    </div>
+
+    <div class="advisory {{ risk_level }}">
+      {% if risk_level == 'high' %}
+        <strong>⚠ Advisory:</strong> The model indicates a high probability of heart disease. Please consult a qualified cardiologist or healthcare provider immediately for proper diagnosis and care.
+      {% else %}
+        <strong>✓ Advisory:</strong> The model indicates a low probability of heart disease. Maintain a healthy lifestyle with regular exercise and balanced diet. Continue routine check-ups with your healthcare provider.
+      {% endif %}
+    </div>
+
+    <div class="actions">
+      <a href="/" class="btn-primary">← New Prediction</a>
+      <a href="/records" class="btn-secondary">View All Records</a>
+    </div>
+
+  </div>
+</div>
+
+<footer>Heart Disease Prediction System &nbsp;·&nbsp; Built with Flask &amp; Scikit-learn &nbsp;·&nbsp; For educational use</footer>
+
+<script>
+  window.addEventListener('load', () => {
+    const fill = document.querySelector('.meter-fill');
+    const target = fill.style.width;
+    fill.style.width = '0%';
+    setTimeout(() => { fill.style.width = target; }, 100);
+  });
+</script>
+</body>
+</html>
